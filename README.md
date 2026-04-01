@@ -30,7 +30,7 @@ This repo is intended to be forked/copied and driven entirely from environment `
 
 > **Remote state subscription**
 > The prod backend config uses a dedicated state storage account in a different subscription. Ensure you have access to that subscription before running `init`.
-> See `environments/prod/backend.hcl`.
+> See `environments/prod-sea/backend.hcl` and `environments/prod-weu/backend.hcl`.
 
 > **Secrets**
 > The sample prod tfvars includes placeholder passwords (e.g. PostgreSQL admin password). Do not commit real secrets.
@@ -43,8 +43,12 @@ This repo is intended to be forked/copied and driven entirely from environment `
 
 - `main.tf`: root orchestration calling internal modules
 - `modules/`: internal wrappers around AVM modules
-- `environments/prod/terraform.tfvars`: environment configuration (maps keyed by your identifiers)
-- `environments/prod/backend.hcl`: remote state backend settings
+- `environments/prod-sea/terraform.tfvars`: SEA environment configuration
+- `environments/prod-weu/terraform.tfvars`: WEU environment configuration
+- `environments/prod-sea/backend.hcl`: SEA remote state backend settings
+- `environments/prod-weu/backend.hcl`: WEU remote state backend settings
+
+This repo intentionally uses **two isolated stacks** so SEA and WEU can run against **different subscriptions** with **different remote state keys**.
 
 ## Prerequisites
 
@@ -60,9 +64,19 @@ If your installed Terraform is already 1.12+, you can use `terraform`. Otherwise
 
 Using the local Terraform 1.12.2 binary:
 
-- `.tools/terraform/1.12.2/terraform.exe init -backend-config=environments/prod/backend.hcl`
-- `.tools/terraform/1.12.2/terraform.exe plan -var-file=environments/prod/terraform.tfvars -input=false`
-- `.tools/terraform/1.12.2/terraform.exe apply -var-file=environments/prod/terraform.tfvars -input=false`
+- SEA stack:
+  - `.tools/terraform/1.12.2/terraform.exe init -backend-config=environments/prod-sea/backend.hcl`
+  - `.tools/terraform/1.12.2/terraform.exe plan -var-file=environments/prod-sea/terraform.tfvars -input=false`
+  - `.tools/terraform/1.12.2/terraform.exe apply -var-file=environments/prod-sea/terraform.tfvars -input=false`
+
+- WEU stack:
+  - `.tools/terraform/1.12.2/terraform.exe init -backend-config=environments/prod-weu/backend.hcl`
+  - `.tools/terraform/1.12.2/terraform.exe plan -var-file=environments/prod-weu/terraform.tfvars -input=false`
+  - `.tools/terraform/1.12.2/terraform.exe apply -var-file=environments/prod-weu/terraform.tfvars -input=false`
+
+> [!IMPORTANT]
+> This repo uses placeholders (e.g. `<SEA_SUBSCRIPTION_ID>`, `<WEU_SUBSCRIPTION_ID>`, `<TENANT_ID>`, `<CONNECTIVITY_SUBSCRIPTION_ID>`, `<TFSTATE_SUBSCRIPTION_ID>`).
+> Replace them with real values (or feed them via repo/environment variables) before running plan/apply.
 
 ## Configuration model
 
@@ -110,12 +124,19 @@ The solution pins AVM module versions in the internal wrappers under `modules/`.
 
 ## CI/CD (GitHub Actions)
 
-Workflow: `.github/workflows/terraform.yml` (prod-only)
+Workflow: `.github/workflows/terraform.yml`
+
+- **PRs and pushes to `main`** run `terraform plan` for **both** stacks (`prod-sea` and `prod-weu`).
+- **Apply/Destroy** are run via `workflow_dispatch` and require you to pick a stack.
 
 Authentication is typically done via GitHub OIDC + federated credentials. Ensure your repo/environment is configured with the required variables/secrets.
+
+> [!NOTE]
+> The workflow uses a single GitHub Actions **Environment** named `prod` for OIDC scoping. Your Entra federated credential subject should match:
+> `repo:cx-demo-org/demo-application-lz:environment:prod`.
 
 ## Troubleshooting
 
 - **"Unsupported Terraform Core version"**: install Terraform 1.12+ or use `.tools/terraform/1.12.2/terraform.exe`.
-- **State backend access issues**: confirm access to the subscription and storage account in `environments/prod/backend.hcl`.
+- **State backend access issues**: confirm access to the subscription and storage account in `environments/prod-sea/backend.hcl` / `environments/prod-weu/backend.hcl`.
 - **AKS identity type schema validation**: ensure AzAPI provider is on a recent 2.x version (this repo allows `< 3.0`).
