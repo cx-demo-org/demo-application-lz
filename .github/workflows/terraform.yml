@@ -365,6 +365,71 @@ jobs:
             exit 1
           fi
 
+      - name: Terraform init
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          stack="${{ env.STACK }}"
+
+          echo "=== Init ${stack} ==="
+          rm -rf .terraform
+          terraform init -input=false -reconfigure -backend-config="environments/${stack}/backend.hcl"
+
+      - name: Cleanup orphaned AKS/AppGW (when missing from state)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          stack="${{ env.STACK }}"
+          prefix="demo-applz-aks-${stack}"
+          rg="${prefix}-rg"
+          aks_name="${prefix}"
+          appgw_name="${prefix}-appgw"
+          node_rg="${prefix}-node-rg"
+
+          has_aks_in_state=false
+          has_appgw_in_state=false
+
+          if terraform state list 2>/dev/null | grep -q "^module\\.aks"; then
+            has_aks_in_state=true
+          fi
+
+          if terraform state list 2>/dev/null | grep -q "^module\\.application_gateways"; then
+            has_appgw_in_state=true
+          fi
+
+          echo "AKS in state: ${has_aks_in_state}"
+          echo "AppGW in state: ${has_appgw_in_state}"
+
+          if [[ "${has_appgw_in_state}" != "true" ]]; then
+            if az network application-gateway show -g "${rg}" -n "${appgw_name}" >/dev/null 2>&1; then
+              echo "Deleting orphan App Gateway ${rg}/${appgw_name} ..."
+              az network application-gateway delete -g "${rg}" -n "${appgw_name}" || true
+              az network application-gateway wait -g "${rg}" -n "${appgw_name}" --deleted || true
+            else
+              echo "No orphan App Gateway found at ${rg}/${appgw_name}."
+            fi
+          fi
+
+          if [[ "${has_aks_in_state}" != "true" ]]; then
+            if az aks show -g "${rg}" -n "${aks_name}" >/dev/null 2>&1; then
+              echo "Deleting orphan AKS cluster ${rg}/${aks_name} ..."
+              az aks delete -g "${rg}" -n "${aks_name}" --yes --no-wait || true
+              az aks wait -g "${rg}" -n "${aks_name}" --deleted || true
+            else
+              echo "No orphan AKS cluster found at ${rg}/${aks_name}."
+            fi
+
+            if [[ "$(az group exists --name "${node_rg}")" == "true" ]]; then
+              echo "Deleting orphan AKS node RG ${node_rg} ..."
+              az group delete --name "${node_rg}" --yes --no-wait || true
+              az group wait --name "${node_rg}" --deleted || true
+            else
+              echo "No orphan node RG found at ${node_rg}."
+            fi
+          fi
+
       - name: Terraform destroy
         shell: bash
         run: |
@@ -373,6 +438,4 @@ jobs:
           stack="${{ env.STACK }}"
 
           echo "=== Destroying ${stack} ==="
-          rm -rf .terraform
-          terraform init -input=false -reconfigure -backend-config="environments/${stack}/backend.hcl"
           terraform destroy -lock-timeout=10m -input=false -auto-approve -var-file="environments/${stack}/terraform.tfvars"
