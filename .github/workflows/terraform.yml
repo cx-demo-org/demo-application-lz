@@ -295,10 +295,11 @@ jobs:
     if: |
       github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
 
-    environment: ${{ github.event.inputs.stack }}
+    environment: prod
 
     env:
       STACK: ${{ github.event.inputs.stack }}
+      ARM_SUBSCRIPTION_ID: ${{ github.event.inputs.stack == 'prod-weu' && '<WEU_SUBSCRIPTION_ID>' || '<SEA_SUBSCRIPTION_ID>' }}
 
     steps:
       - uses: actions/checkout@v6
