@@ -1,0 +1,11 @@
+.terraform/
+.tools/
+tfplan*
+plan-*.txt
+terraform.tfstate
+terraform.tfstate.backup
+crash.log
+*.tfvars.tmp
+
+# Local state backup artifacts (do not commit)
+state-backups/
