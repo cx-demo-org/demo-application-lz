@@ -1,4 +1,4 @@
-# demo-application-lz
+# demo-applz-aks
 
 > [!IMPORTANT]
 > This repository uses **Azure Verified Modules (AVM)** and is intended as a reference implementation.
@@ -139,7 +139,7 @@ Authentication is typically done via GitHub OIDC + federated credentials. Ensure
 
 > [!NOTE]
 > The workflow uses a single GitHub Actions **Environment** named `prod` for OIDC scoping. Your Entra federated credential subject should match:
-> `repo:cx-demo-org/demo-application-lz:environment:prod`.
+> `repo:cx-demo-org/demo-applz:environment:prod`.
 
 ## Troubleshooting
 

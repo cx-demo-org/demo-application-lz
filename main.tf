@@ -75,3 +75,14 @@ module "container_registries" {
   enable_telemetry     = var.enable_telemetry
 }
 
+module "mongo_clusters" {
+  source = "./modules/mongo_clusters"
+
+  mongo_clusters                = var.mongo_clusters
+  mongo_cluster_admin_passwords = var.mongo_cluster_admin_passwords
+  resource_groups               = module.virtual_networks.resource_groups
+  virtual_networks              = module.virtual_networks.virtual_networks
+  private_dns_zones             = module.virtual_networks.private_dns_zones
+  enable_telemetry              = var.enable_telemetry
+}
+

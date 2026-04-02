@@ -51,3 +51,18 @@ output "container_registry_names" {
   description = "Container Registry (ACR) names, keyed by var.container_registries key."
   value       = module.container_registries.container_registry_names
 }
+
+output "mongo_cluster_ids" {
+  description = "Cosmos DB for MongoDB vCore cluster resource IDs, keyed by var.mongo_clusters key."
+  value       = module.mongo_clusters.mongo_cluster_ids
+}
+
+output "mongo_cluster_names" {
+  description = "Cosmos DB for MongoDB vCore cluster names, keyed by var.mongo_clusters key."
+  value       = module.mongo_clusters.mongo_cluster_names
+}
+
+output "mongo_cluster_private_endpoints" {
+  description = "Mongo vCore private endpoint outputs, keyed by var.mongo_clusters key."
+  value       = module.mongo_clusters.private_endpoints
+}

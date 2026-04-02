@@ -15,8 +15,8 @@
 # -------------------------------------------------------------------------------------
 # Used by providers (AzureRM/AzAPI) to target the correct tenant/subscription.
 # Must match the subscription where you intend to create resources.
-subscription_id = null
-tenant_id       = null
+subscription_id = "00000000-0000-0000-0000-000000000000"
+tenant_id       = "00000000-0000-0000-0000-000000000000"
 
 # Controls whether AVM modules emit telemetry resources.
 enable_telemetry = true
@@ -132,6 +132,29 @@ private_dns_zones = {
       workload    = "dns"
     }
   }
+
+  # Cosmos DB for MongoDB vCore
+  mongo_vcore = {
+    domain_name        = "privatelink.mongocluster.cosmos.azure.com"
+    resource_group_key = "sea"
+
+    virtual_network_links = {
+      sea_spoke = {
+        name                 = "link-demo-applz-aks-prod-sea-vnet"
+        virtual_network_key  = "sea_spoke"
+        registration_enabled = false
+        resolution_policy    = "Default"
+        tags = {
+          environment = "prod"
+        }
+      }
+    }
+
+    tags = {
+      environment = "prod"
+      workload    = "dns"
+    }
+  }
 }
 
 # -------------------------------------------------------------------------------------
@@ -166,7 +189,7 @@ resource_groups = {
 # Security posture here is private-by-default (public access disabled + private endpoint).
 key_vaults = {
   sea_shared = {
-    name               = "kv-applz-aks-sea-demo01"
+    name               = "kv-applz-aks-sea-1d70f8"
     resource_group_key = "sea"
     location           = "southeastasia"
 
@@ -203,7 +226,7 @@ key_vaults = {
 # Security posture here is private-by-default (public access disabled + private endpoint).
 storage_accounts = {
   sea_shared = {
-    name               = "demoapplzaksseademo01"
+    name               = "demoapplzakssea1d70f8"
     resource_group_key = "sea"
     location           = "southeastasia"
 
@@ -364,6 +387,17 @@ virtual_networks = {
         address_prefixes           = ["10.20.4.0/24"]
         route_table_key            = "sea_spoke_udr"
         network_security_group_key = "aks_apiserver"
+
+        # Required for the AKS API server VNet integration subnet.
+        # Prevents Azure from rejecting updates with SubnetMissingRequiredDelegation.
+        delegations = [
+          {
+            name = "aks-delegation"
+            service_delegation = {
+              name = "Microsoft.ContainerService/managedClusters"
+            }
+          }
+        ]
       }
 
       private_endpoints = {
@@ -576,6 +610,16 @@ application_gateways = {
 # Important:
 # - We use an *inbound Gateway private endpoint* (private connectivity) while APIM itself
 #   is not deployed as internal VNet APIM (virtual_network_type = "None").
+
+
+# -------------------------------------------------------------------------------------
+# TEMPORARILY DISABLED: API Management (AVM)
+# -------------------------------------------------------------------------------------
+# APIM can take a long time to update (up to ~80 minutes) and will fail terraform reads
+# during certain maintenance windows. Leave the configuration below for later re-enable.
+api_management_services = {}
+
+/*
 api_management_services = {
   sea = {
     name               = "demo-applz-aks-prod-sea-apim"
@@ -614,6 +658,7 @@ api_management_services = {
     }
   }
 }
+*/
 
 # -------------------------------------------------------------------------------------
 # Azure Container Registry (AVM)
@@ -622,7 +667,7 @@ api_management_services = {
 # Security posture: public access disabled + Private Endpoint + `privatelink.azurecr.io` DNS.
 container_registries = {
   sea = {
-    name               = "demoapplzaksseademo01acr"
+    name               = "demoapplzakssea1d70f8acr"
     location           = "southeastasia"
     resource_group_key = "sea"
 
@@ -652,6 +697,61 @@ container_registries = {
     tags = {
       environment = "prod"
       workload    = "acr"
+    }
+  }
+}
+
+# -------------------------------------------------------------------------------------
+# Cosmos DB for MongoDB vCore clusters (AVM)
+# -------------------------------------------------------------------------------------
+# Purpose: managed MongoDB-compatible database (vCore-based) with private endpoint support.
+#
+# Notes:
+# - Do NOT commit real passwords. Inject `administrator_login_password` via secret store.
+# - When `public_network_access = "Disabled"`, you typically want a private endpoint.
+# - This repo expects you to model everything via tfvars; uncomment and adjust as needed.
+#
+mongo_clusters = {
+  sea = {
+    # Required
+    name                         = "demo-applz-aks-prod-sea-mongo"
+    location                     = "southeastasia"
+    resource_group_key           = "sea"
+    administrator_login          = "mongoadmin"
+    administrator_login_password = null
+
+    # Optional
+    public_network_access = "Disabled"
+    enable_ha             = true
+    compute_tier          = "M30"
+    node_count            = 3
+    storage_size_gb       = 128
+    server_version        = "7.0"
+
+    private_endpoints_manage_dns_zone_group = true
+    private_endpoints = {
+      pe = {
+        name = "demo-applz-aks-prod-sea-mongo-pe"
+
+        network_configuration = {
+          virtual_network_key = "sea_spoke"
+          subnet_key          = "private_endpoints"
+        }
+
+        private_dns_zone = {
+          keys = ["mongo_vcore"]
+        }
+
+        tags = {
+          environment = "prod"
+          workload    = "mongo"
+        }
+      }
+    }
+
+    tags = {
+      environment = "prod"
+      workload    = "mongo"
     }
   }
 }

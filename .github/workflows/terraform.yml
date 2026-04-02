@@ -46,10 +46,14 @@ env:
   ARM_USE_AZUREAD: true
   ARM_OIDC_AUDIENCE: api://AzureADTokenExchange
 
-  ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
-  ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
+  ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID || '00000000-0000-0000-0000-000000000000' }}
+  ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID || '00000000-0000-0000-0000-000000000000' }}
 
   TF_IN_AUTOMATION: true
+
+  # Mongo vCore admin password overrides.
+  # Store as a JSON map keyed by mongo_clusters key, e.g. {"sea":"...","weu":"..."}
+  TF_VAR_mongo_cluster_admin_passwords: ${{ secrets.MONGO_CLUSTER_ADMIN_PASSWORDS_JSON }}
 
 jobs:
   plan:
@@ -68,7 +72,7 @@ jobs:
       STACK: ${{ matrix.stack }}
       # Azure CLI context for login; set per stack to make az commands deterministic.
       # Terraform itself uses subscription_id from the selected env tfvars.
-      ARM_SUBSCRIPTION_ID: ${{ matrix.stack == 'prod-weu' && vars.ARM_SUBSCRIPTION_ID_PROD_WEU || vars.ARM_SUBSCRIPTION_ID_PROD_SEA }}
+      ARM_SUBSCRIPTION_ID: ${{ matrix.stack == 'prod-weu' && '00000000-0000-0000-0000-000000000000' || '00000000-0000-0000-0000-000000000000' }}
 
     steps:
       - uses: actions/checkout@v6
@@ -210,7 +214,7 @@ jobs:
 
     env:
       STACK: ${{ github.event.inputs.stack }}
-      ARM_SUBSCRIPTION_ID: ${{ github.event.inputs.stack == 'prod-weu' && vars.ARM_SUBSCRIPTION_ID_PROD_WEU || vars.ARM_SUBSCRIPTION_ID_PROD_SEA }}
+      ARM_SUBSCRIPTION_ID: ${{ github.event.inputs.stack == 'prod-weu' && '00000000-0000-0000-0000-000000000000' || '00000000-0000-0000-0000-000000000000' }}
 
     steps:
       - uses: actions/checkout@v6
@@ -299,7 +303,7 @@ jobs:
 
     env:
       STACK: ${{ github.event.inputs.stack }}
-      ARM_SUBSCRIPTION_ID: ${{ github.event.inputs.stack == 'prod-weu' && vars.ARM_SUBSCRIPTION_ID_PROD_WEU || vars.ARM_SUBSCRIPTION_ID_PROD_SEA }}
+      ARM_SUBSCRIPTION_ID: ${{ github.event.inputs.stack == 'prod-weu' && '00000000-0000-0000-0000-000000000000' || '00000000-0000-0000-0000-000000000000' }}
 
     steps:
       - uses: actions/checkout@v6

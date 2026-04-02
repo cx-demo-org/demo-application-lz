@@ -157,7 +157,7 @@ resource "azurerm_role_assignment" "grafana_monitoring_reader" {
   for_each = local.aks_monitoring
 
   scope              = azurerm_monitor_workspace.amw[each.key].id
-  role_definition_id = "/subscriptions/${split("/", azurerm_monitor_workspace.amw[each.key].id)[2]}/providers/Microsoft.Authorization/roleDefinitions/b0d8363b-8ddd-447d-831f-62ca05bff136"
+  role_definition_id = "/subscriptions/${split("/", azurerm_monitor_workspace.amw[each.key].id)[2]}/providers/Microsoft.Authorization/roleDefinitions/00000000-0000-0000-0000-000000000000"
   principal_id       = azurerm_dashboard_grafana.grafana[each.key].identity[0].principal_id
 }
 
