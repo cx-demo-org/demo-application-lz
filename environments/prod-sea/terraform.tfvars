@@ -804,6 +804,22 @@ postgres_servers = {
 
     public_network_access_enabled = false
 
+    # Application databases
+    databases = {
+      dagster = {
+        name = "dagster"
+      }
+      iceberg = {
+        name = "iceberg"
+      }
+      superset = {
+        name = "superset"
+      }
+      datahub = {
+        name = "datahub"
+      }
+    }
+
     tags = {
       environment = "prod"
       workload    = "postgres"
