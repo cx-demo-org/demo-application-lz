@@ -55,3 +55,23 @@ module "application_gateways" {
   enable_telemetry     = var.enable_telemetry
 }
 
+module "api_management_services" {
+  source = "./modules/api_management_services"
+
+  api_management_services = var.api_management_services
+  resource_groups         = module.virtual_networks.resource_groups
+  virtual_networks        = module.virtual_networks.virtual_networks
+  private_dns_zones       = module.virtual_networks.private_dns_zones
+  enable_telemetry        = var.enable_telemetry
+}
+
+module "container_registries" {
+  source = "./modules/container_registries"
+
+  container_registries = var.container_registries
+  resource_groups      = module.virtual_networks.resource_groups
+  virtual_networks     = module.virtual_networks.virtual_networks
+  private_dns_zones    = module.virtual_networks.private_dns_zones
+  enable_telemetry     = var.enable_telemetry
+}
+

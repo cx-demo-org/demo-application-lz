@@ -142,7 +142,10 @@ module "aks" {
       private_dns_zone                   = "system"
       subnet_id                          = var.virtual_networks[each.value.virtual_network_key].subnets[each.value.subnet_apiserver_key].resource_id
     },
-    coalesce(try(each.value.avm.api_server_access_profile, null), local.empty_api_server_access_profile)
+    {
+      for k, v in coalesce(try(each.value.avm.api_server_access_profile, null), local.empty_api_server_access_profile) : k => v
+      if v != null
+    }
   )
 
   # We are not using legacy AAD application integration.

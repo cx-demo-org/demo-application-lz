@@ -685,6 +685,170 @@ variable "application_gateways" {
   }))
 }
 
+variable "api_management_services" {
+  description = "Map of API Management services to create (AVM)."
+  type = map(object({
+    name                = string
+    location            = string
+    resource_group_key  = optional(string, null)
+    resource_group_name = optional(string, null)
+
+    publisher_email = string
+
+    additional_location = optional(any, [])
+    api_version_sets    = optional(any, {})
+    apis                = optional(any, {})
+    certificate         = optional(any, [])
+
+    client_certificate_enabled = optional(bool, false)
+    delegation                 = optional(any, null)
+    gateway_disabled           = optional(bool, false)
+    hostname_configuration     = optional(any, null)
+
+    publisher_name                = optional(string, null)
+    sku_name                      = optional(string, "Developer_1")
+    zones                         = optional(list(string), null)
+    public_network_access_enabled = optional(bool, true)
+
+    min_api_version           = optional(string, null)
+    named_values              = optional(any, {})
+    notification_sender_email = optional(string, null)
+    policy                    = optional(any, null)
+    products                  = optional(any, {})
+    protocols                 = optional(any, null)
+    public_ip_address_id      = optional(string, null)
+    security                  = optional(any, null)
+    sign_in                   = optional(any, null)
+    sign_up                   = optional(any, null)
+    subscriptions             = optional(any, {})
+    tenant_access             = optional(any, null)
+    virtual_network_subnet_id = optional(string, null)
+
+    virtual_network_type = optional(string, "None")
+    virtual_network_configuration = optional(object({
+      virtual_network_key = optional(string, null)
+      subnet_key          = optional(string, null)
+      subnet_resource_id  = optional(string, null)
+    }), null)
+
+    enable_telemetry = optional(bool, null)
+
+    diagnostic_settings                     = optional(any, {})
+    managed_identities                      = optional(any, {})
+    lock                                    = optional(any, null)
+    role_assignments                        = optional(any, {})
+    private_endpoints                       = optional(any, {})
+    private_endpoints_manage_dns_zone_group = optional(bool, true)
+
+    tags = optional(map(string), null)
+  }))
+  default = {}
+
+  validation {
+    condition = alltrue([
+      for k, v in var.api_management_services : (
+        ((try(v.resource_group_key, null) != null) != (try(v.resource_group_name, null) != null)) &&
+        (
+          v.virtual_network_configuration == null ? true : (
+            (
+              try(v.virtual_network_configuration.subnet_resource_id, null) != null &&
+              try(v.virtual_network_configuration.virtual_network_key, null) == null &&
+              try(v.virtual_network_configuration.subnet_key, null) == null
+              ) || (
+              try(v.virtual_network_configuration.subnet_resource_id, null) == null &&
+              try(v.virtual_network_configuration.virtual_network_key, null) != null &&
+              try(v.virtual_network_configuration.subnet_key, null) != null
+            )
+          )
+        ) &&
+        (
+          try(v.virtual_network_subnet_id, null) != null ? v.virtual_network_configuration == null : true
+        ) &&
+        (
+          try(v.virtual_network_type, "None") == "None" ? true : (
+            try(v.virtual_network_subnet_id, null) != null || v.virtual_network_configuration != null
+          )
+        )
+      )
+    ])
+    error_message = "Each api_management_service must set exactly one of resource_group_key or resource_group_name. Also set either virtual_network_subnet_id or virtual_network_configuration (not both). If virtual_network_type is not 'None', a subnet must be provided."
+  }
+}
+
+variable "container_registries" {
+  description = "Map of Azure Container Registries (ACR) to create (AVM)."
+  type = map(object({
+    # Required
+    name                = string
+    location            = string
+    resource_group_key  = optional(string, null)
+    resource_group_name = optional(string, null)
+
+    # Optional (AVM Inputs (26) minus required above)
+    admin_enabled              = optional(bool, false)
+    anonymous_pull_enabled     = optional(bool, false)
+    customer_managed_key       = optional(any, null)
+    data_endpoint_enabled      = optional(bool, false)
+    diagnostic_settings        = optional(any, {})
+    enable_telemetry           = optional(bool, null)
+    enable_trust_policy        = optional(bool, false)
+    export_policy_enabled      = optional(bool, true)
+    georeplications            = optional(any, [])
+    lock                       = optional(any, null)
+    managed_identities         = optional(any, {})
+    network_rule_bypass_option = optional(string, null)
+    network_rule_set           = optional(any, null)
+
+    private_endpoints = optional(map(object({
+      name = optional(string, null)
+
+      role_assignments = optional(any, {})
+
+      lock = optional(any, null)
+      tags = optional(map(string), null)
+
+      # Either set subnet_resource_id directly OR provide network_configuration.
+      subnet_resource_id = optional(string, null)
+      network_configuration = optional(object({
+        subnet_resource_id  = optional(string, null)
+        virtual_network_key = optional(string, null)
+        subnet_key          = optional(string, null)
+      }), null)
+
+      private_dns_zone_group_name   = optional(string, "default")
+      private_dns_zone_resource_ids = optional(set(string), [])
+      private_dns_zone = optional(object({
+        keys = optional(list(string), [])
+      }), null)
+
+      application_security_group_associations = optional(map(string), {})
+      private_service_connection_name         = optional(string, null)
+      network_interface_name                  = optional(string, null)
+      location                                = optional(string, null)
+      resource_group_name                     = optional(string, null)
+      ip_configurations                       = optional(any, {})
+    })), {})
+
+    private_endpoints_manage_dns_zone_group = optional(bool, true)
+    public_network_access_enabled           = optional(bool, true)
+    quarantine_policy_enabled               = optional(bool, false)
+    retention_policy_in_days                = optional(number, 7)
+    role_assignments                        = optional(any, {})
+    scope_maps                              = optional(any, {})
+    sku                                     = optional(string, "Premium")
+    tags                                    = optional(map(string), null)
+    zone_redundancy_enabled                 = optional(bool, true)
+  }))
+  default = {}
+
+  validation {
+    condition = alltrue([
+      for k, v in var.container_registries : ((try(v.resource_group_key, null) != null) != (try(v.resource_group_name, null) != null))
+    ])
+    error_message = "Each container_registry must set exactly one of resource_group_key or resource_group_name."
+  }
+}
+
 variable "postgres_servers" {
   description = "Map of PostgreSQL Flexible Servers to create (AVM) with delegated subnet + private endpoint in a dedicated subnet."
   type = map(object({

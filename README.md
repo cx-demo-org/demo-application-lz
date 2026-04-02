@@ -1,4 +1,4 @@
-# demo-applz-aks
+# demo-application-lz
 
 > [!IMPORTANT]
 > This repository uses **Azure Verified Modules (AVM)** and is intended as a reference implementation.
@@ -14,14 +14,24 @@ This repo is intended to be forked/copied and driven entirely from environment `
 
 ## What this deploys
 
-- Virtual Networks + Subnets 
-- AKS clusters 
-- Application Gateways with delegrated subnets
-- PostgreSQL Flexible Server with delegated subnet + private endpoint
-- Optional: VNet → Virtual WAN vHub connection 
-- Bastion Server
-- Key Vault
-- Storage Account
+- Resource Groups (supports one-RG-per-region or many-RGs-per-region)
+- Log Analytics Workspace (either BYO or created by this stack; optional private endpoints)
+- Virtual Networks (spokes) + Subnets
+- Network Security Groups (NSGs) + subnet associations
+- Route Tables (UDR) + subnet associations (used for AKS egress when `outbound_type = userDefinedRouting`)
+- Private DNS Zones + VNet links (for Private Link name resolution; includes common zones such as ACR, Key Vault, Storage Blob, API Management, Postgres)
+- Managed Identities (User Assigned) + optional role assignments
+- Key Vaults (optional) with private endpoints and support for disabling public network access
+- Storage Accounts (optional) with containers, private endpoints, and support for disabling public network access
+- Azure Bastion (optional)
+- Network Watcher flow logs + traffic analytics (optional)
+- AKS clusters attached to the created subnets (private cluster by default)
+- AKS monitoring stack: Azure Monitor Workspace (Managed Prometheus), DCE/DCR + associations, Managed Grafana, and Prometheus rule groups
+- Application Gateways (supports private frontends; WAF policy integration supported)
+- API Management (optional) with support for VNet integration and private endpoints
+- Azure Container Registry (optional) with private endpoints and private DNS
+- PostgreSQL Flexible Server (optional) with delegated subnet + private DNS (and optional private endpoints when supported)
+- Optional: VNet → Virtual WAN vHub connection
 
 ## Important notes
 
@@ -73,10 +83,6 @@ Using the local Terraform 1.12.2 binary:
   - `.tools/terraform/1.12.2/terraform.exe init -backend-config=environments/prod-weu/backend.hcl`
   - `.tools/terraform/1.12.2/terraform.exe plan -var-file=environments/prod-weu/terraform.tfvars -input=false`
   - `.tools/terraform/1.12.2/terraform.exe apply -var-file=environments/prod-weu/terraform.tfvars -input=false`
-
-> [!IMPORTANT]
-> This repo uses placeholders (e.g. `<SEA_SUBSCRIPTION_ID>`, `<WEU_SUBSCRIPTION_ID>`, `<TENANT_ID>`, `<CONNECTIVITY_SUBSCRIPTION_ID>`, `<TFSTATE_SUBSCRIPTION_ID>`).
-> Replace them with real values (or feed them via repo/environment variables) before running plan/apply.
 
 ## Configuration model
 

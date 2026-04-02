@@ -1,8 +1,8 @@
 resource_group_name  = "demo-tfstate-prod-rg"
 storage_account_name = "demotfstateprod001"
-subscription_id      = "<TFSTATE_SUBSCRIPTION_ID>"
+subscription_id      = "00000000-0000-0000-0000-000000000000"
 container_name       = "tfstate"
-key                  = "demo-applz-aks/environments/prod-weu/terraform.tfstate"
+key                  = "demo-application-lz/environments/prod-weu/terraform.tfstate"
 
 # Use Microsoft Entra ID (Azure AD) for backend auth (no access keys).
 use_azuread_auth     = true

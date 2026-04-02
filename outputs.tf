@@ -31,3 +31,23 @@ output "postgres_fqdns" {
   description = "PostgreSQL Flexible Server FQDNs, keyed by var.postgres_servers key."
   value       = module.postgres_servers.postgres_fqdns
 }
+
+output "api_management_service_ids" {
+  description = "API Management service resource IDs, keyed by var.api_management_services key."
+  value       = module.api_management_services.api_management_service_ids
+}
+
+output "api_management_gateway_urls" {
+  description = "API Management gateway URLs, keyed by var.api_management_services key."
+  value       = module.api_management_services.api_management_gateway_urls
+}
+
+output "container_registry_ids" {
+  description = "Container Registry (ACR) resource IDs, keyed by var.container_registries key."
+  value       = module.container_registries.container_registry_ids
+}
+
+output "container_registry_names" {
+  description = "Container Registry (ACR) names, keyed by var.container_registries key."
+  value       = module.container_registries.container_registry_names
+}

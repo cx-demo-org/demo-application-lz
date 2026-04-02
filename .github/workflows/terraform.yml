@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: ["main"]
   push:
-    branches: ["main"]
+    branches: ["main", "feat/**"]
   workflow_dispatch:
     inputs:
       action:
@@ -46,8 +46,8 @@ env:
   ARM_USE_AZUREAD: true
   ARM_OIDC_AUDIENCE: api://AzureADTokenExchange
 
-  ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID || 'c14be0d1-54b1-4c90-949b-2775aec6307e' }}
-  ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID || '<TENANT_ID>' }}
+  ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
 
   TF_IN_AUTOMATION: true
 
@@ -68,7 +68,7 @@ jobs:
       STACK: ${{ matrix.stack }}
       # Azure CLI context for login; set per stack to make az commands deterministic.
       # Terraform itself uses subscription_id from the selected env tfvars.
-      ARM_SUBSCRIPTION_ID: ${{ matrix.stack == 'prod-weu' && '<WEU_SUBSCRIPTION_ID>' || '<SEA_SUBSCRIPTION_ID>' }}
+      ARM_SUBSCRIPTION_ID: ${{ matrix.stack == 'prod-weu' && vars.ARM_SUBSCRIPTION_ID_PROD_WEU || vars.ARM_SUBSCRIPTION_ID_PROD_SEA }}
 
     steps:
       - uses: actions/checkout@v6
@@ -210,7 +210,7 @@ jobs:
 
     env:
       STACK: ${{ github.event.inputs.stack }}
-      ARM_SUBSCRIPTION_ID: ${{ github.event.inputs.stack == 'prod-weu' && '<WEU_SUBSCRIPTION_ID>' || '<SEA_SUBSCRIPTION_ID>' }}
+      ARM_SUBSCRIPTION_ID: ${{ github.event.inputs.stack == 'prod-weu' && vars.ARM_SUBSCRIPTION_ID_PROD_WEU || vars.ARM_SUBSCRIPTION_ID_PROD_SEA }}
 
     steps:
       - uses: actions/checkout@v6
@@ -299,7 +299,7 @@ jobs:
 
     env:
       STACK: ${{ github.event.inputs.stack }}
-      ARM_SUBSCRIPTION_ID: ${{ github.event.inputs.stack == 'prod-weu' && '<WEU_SUBSCRIPTION_ID>' || '<SEA_SUBSCRIPTION_ID>' }}
+      ARM_SUBSCRIPTION_ID: ${{ github.event.inputs.stack == 'prod-weu' && vars.ARM_SUBSCRIPTION_ID_PROD_WEU || vars.ARM_SUBSCRIPTION_ID_PROD_SEA }}
 
     steps:
       - uses: actions/checkout@v6
@@ -402,6 +402,9 @@ jobs:
           echo "AKS in state: ${has_aks_in_state}"
           echo "AppGW in state: ${has_appgw_in_state}"
 
+          # If these resources are NOT in Terraform state but exist in Azure,
+          # they can block subnet deletes (InUseSubnetCannotBeDeleted).
+
           if [[ "${has_appgw_in_state}" != "true" ]]; then
             if az network application-gateway show -g "${rg}" -n "${appgw_name}" >/dev/null 2>&1; then
               echo "Deleting orphan App Gateway ${rg}/${appgw_name} ..."
@@ -421,6 +424,7 @@ jobs:
               echo "No orphan AKS cluster found at ${rg}/${aks_name}."
             fi
 
+            # If a node resource group exists, it can contain VMSS/NICs that still pin the subnet.
             if [[ "$(az group exists --name "${node_rg}")" == "true" ]]; then
               echo "Deleting orphan AKS node RG ${node_rg} ..."
               az group delete --name "${node_rg}" --yes --no-wait || true
