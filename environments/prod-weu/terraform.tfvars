@@ -250,6 +250,17 @@ storage_accounts = {
       }
     }
 
+    # Blob containers (data plane)
+    # Driven purely by TFVARS via the AVM storage account module.
+    containers = {
+      wfs = {
+        name = "demo-weu-wfs"
+      }
+      datapond_dev = {
+        name = "demo-weu-datapond-dev"
+      }
+    }
+
     tags = {
       environment = "prod"
       workload    = "shared-services"
