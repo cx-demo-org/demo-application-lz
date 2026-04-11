@@ -219,6 +219,12 @@ variable "flowlog_configuration" {
   default     = null
 }
 
+variable "virtual_machines" {
+  description = "Optional: map of virtual machines to create (AVM). Each value is a pass-through object for Azure/avm-res-compute-virtualmachine/azurerm (Inputs (72) in v0.20.0)."
+  type        = any
+  default     = {}
+}
+
 variable "aks_clusters" {
   description = "Map of AKS clusters to create (AVM managed cluster) and attach to the created VNets/subnets."
   type = map(object({

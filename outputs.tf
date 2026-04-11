@@ -17,6 +17,11 @@ output "subnet_ids" {
   }
 }
 
+output "virtual_machine_resource_ids" {
+  description = "Virtual machine resource IDs, keyed by var.virtual_machines key."
+  value       = module.virtual_machines.virtual_machine_resource_ids
+}
+
 output "aks_cluster_ids" {
   description = "AKS cluster resource IDs, keyed by var.aks_clusters key."
   value       = module.aks.aks_cluster_ids

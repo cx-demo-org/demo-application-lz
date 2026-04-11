@@ -46,8 +46,8 @@ env:
   ARM_USE_AZUREAD: true
   ARM_OIDC_AUDIENCE: api://AzureADTokenExchange
 
-  ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID || '00000000-0000-0000-0000-000000000000' }}
-  ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID || '00000000-0000-0000-0000-000000000000' }}
+  ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
 
   TF_IN_AUTOMATION: true
 
@@ -72,7 +72,7 @@ jobs:
       STACK: ${{ matrix.stack }}
       # Azure CLI context for login; set per stack to make az commands deterministic.
       # Terraform itself uses subscription_id from the selected env tfvars.
-      ARM_SUBSCRIPTION_ID: ${{ matrix.stack == 'prod-weu' && '00000000-0000-0000-0000-000000000000' || '00000000-0000-0000-0000-000000000000' }}
+      ARM_SUBSCRIPTION_ID: ${{ matrix.stack == 'prod-weu' && vars.ARM_SUBSCRIPTION_ID_PROD_WEU || vars.ARM_SUBSCRIPTION_ID_PROD_SEA }}
 
     steps:
       - uses: actions/checkout@v6
@@ -214,7 +214,7 @@ jobs:
 
     env:
       STACK: ${{ github.event.inputs.stack }}
-      ARM_SUBSCRIPTION_ID: ${{ github.event.inputs.stack == 'prod-weu' && '00000000-0000-0000-0000-000000000000' || '00000000-0000-0000-0000-000000000000' }}
+      ARM_SUBSCRIPTION_ID: ${{ github.event.inputs.stack == 'prod-weu' && vars.ARM_SUBSCRIPTION_ID_PROD_WEU || vars.ARM_SUBSCRIPTION_ID_PROD_SEA }}
 
     steps:
       - uses: actions/checkout@v6
@@ -303,7 +303,7 @@ jobs:
 
     env:
       STACK: ${{ github.event.inputs.stack }}
-      ARM_SUBSCRIPTION_ID: ${{ github.event.inputs.stack == 'prod-weu' && '00000000-0000-0000-0000-000000000000' || '00000000-0000-0000-0000-000000000000' }}
+      ARM_SUBSCRIPTION_ID: ${{ github.event.inputs.stack == 'prod-weu' && vars.ARM_SUBSCRIPTION_ID_PROD_WEU || vars.ARM_SUBSCRIPTION_ID_PROD_SEA }}
 
     steps:
       - uses: actions/checkout@v6
@@ -386,7 +386,7 @@ jobs:
           set -euo pipefail
 
           stack="${{ env.STACK }}"
-          prefix="demo-applz-aks-${stack}"
+          prefix="msft-applz-aks-${stack}"
           rg="${prefix}-rg"
           aks_name="${prefix}"
           appgw_name="${prefix}-appgw"
