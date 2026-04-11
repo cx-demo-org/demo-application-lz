@@ -23,6 +23,20 @@ module "virtual_networks" {
   flowlog_configuration         = var.flowlog_configuration
 }
 
+module "virtual_machines" {
+  source = "./modules/virtual_machines"
+
+  virtual_machines = var.virtual_machines
+
+  resource_groups  = module.virtual_networks.resource_groups
+  virtual_networks = module.virtual_networks.virtual_networks
+
+  location         = var.location
+  tags             = var.tags
+  lock             = var.lock
+  enable_telemetry = var.enable_telemetry
+}
+
 module "postgres_servers" {
   source = "./modules/postgres_servers"
 

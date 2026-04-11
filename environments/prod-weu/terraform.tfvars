@@ -31,6 +31,169 @@ tags = {
 }
 
 # -------------------------------------------------------------------------------------
+# RBAC Examples (commented templates)
+# -------------------------------------------------------------------------------------
+# The `shared_services_pattern` supports RBAC in two ways:
+# 1) Per-resource `role_assignments` (recommended): attach RBAC to the resource block itself.
+# 2) Standalone `role_assignments`: create role assignments at arbitrary scopes.
+#
+# Notes:
+# - `principal_id` is the Entra ID objectId of a User/Group/Service Principal.
+# - Some resources (notably Key Vault + standalone role_assignments) can alternatively use
+#   `managed_identity_key` to reference a UAMI created under `managed_identities`.
+#
+# Object IDs used in examples (placeholders for customer-facing repo):
+# - User user@example.com: 00000000-0000-0000-0000-000000000000
+# - Group my-group:        00000000-0000-0000-0000-000000000000
+#
+# Example 1 — Resource Group RBAC (resource_groups.<key>.role_assignments)
+# resource_groups = {
+#   weu = {
+#     ...
+#     role_assignments = {
+#       pdevadiga_contributor = {
+#         role_definition_id_or_name = "Contributor"
+#         principal_id               = "00000000-0000-0000-0000-000000000000"
+#         principal_type             = "User"
+#       }
+#       aksadmin_contributor = {
+#         role_definition_id_or_name = "Contributor"
+#         principal_id               = "00000000-0000-0000-0000-000000000000"
+#         principal_type             = "Group"
+#       }
+#     }
+#   }
+# }
+#
+# Example 2 — Log Analytics Workspace RBAC (log_analytics_workspace_configuration.role_assignments)
+# log_analytics_workspace_configuration = {
+#   ...
+#   role_assignments = {
+#     aksadmin_law_reader = {
+#       role_definition_id_or_name = "Log Analytics Reader"
+#       principal_id               = "00000000-0000-0000-0000-000000000000"
+#       principal_type             = "Group"
+#     }
+#   }
+# }
+#
+# Example 3 — NSG RBAC (network_security_groups.<key>.role_assignments)
+# network_security_groups = {
+#   vm = {
+#     ...
+#     role_assignments = {
+#       aksadmin_nsg_network_contributor = {
+#         role_definition_id_or_name = "Network Contributor"
+#         principal_id               = "00000000-0000-0000-0000-000000000000"
+#         principal_type             = "Group"
+#       }
+#     }
+#   }
+# }
+#
+# Example 4 — VNet RBAC (virtual_networks.<key>.role_assignments)
+# virtual_networks = {
+#   weu_spoke = {
+#     ...
+#     role_assignments = {
+#       aksadmin_vnet_network_contributor = {
+#         role_definition_id_or_name = "Network Contributor"
+#         principal_id               = "00000000-0000-0000-0000-000000000000"
+#         principal_type             = "Group"
+#       }
+#     }
+#
+#     # Subnet RBAC (virtual_networks.<vnet>.subnets.<subnet>.role_assignments)
+#     subnets = {
+#       vm = {
+#         ...
+#         role_assignments = {
+#           pdevadiga_subnet_network_contributor = {
+#             role_definition_id_or_name = "Network Contributor"
+#             principal_id               = "00000000-0000-0000-0000-000000000000"
+#             principal_type             = "User"
+#           }
+#         }
+#       }
+#     }
+#   }
+# }
+#
+# Example 5 — Key Vault RBAC (key_vaults.<key>.role_assignments)
+# key_vaults = {
+#   weu_shared = {
+#     ...
+#     role_assignments = {
+#       aksadmin_secrets_user = {
+#         role_definition_id_or_name = "Key Vault Secrets User"
+#         principal_id               = "00000000-0000-0000-0000-000000000000"
+#         principal_type             = "Group"
+#       }
+#
+#       # Alternate form using a managed identity created in managed_identities:
+#       # app_uami_secrets_user = {
+#       #   role_definition_id_or_name = "Key Vault Secrets User"
+#       #   managed_identity_key       = "app"
+#       # }
+#     }
+#   }
+# }
+#
+# Example 6 — Storage RBAC (storage_accounts.<key>.role_assignments)
+# storage_accounts = {
+#   weu_shared = {
+#     ...
+#     role_assignments = {
+#       aksadmin_blob_data_contrib = {
+#         role_definition_id_or_name = "Storage Blob Data Contributor"
+#         principal_id               = "00000000-0000-0000-0000-000000000000"
+#         principal_type             = "Group"
+#       }
+#     }
+#   }
+# }
+#
+# Example 7 — Managed Identity + its role assignments (managed_identities.<key>.role_assignments)
+# NOTE: This grants permissions *to the identity principal* at some target scope.
+# managed_identities = {
+#   app = {
+#     name               = "msft-applz-aks-prod-weu-uami-app"
+#     resource_group_key = "weu"
+#
+#     role_assignments = {
+#       kv_secrets_user = {
+#         role_definition_id_or_name = "Key Vault Secrets User"
+#         scope                      = "/subscriptions/<subId>/resourceGroups/<rg>/providers/Microsoft.KeyVault/vaults/<kvName>"
+#       }
+#     }
+#   }
+# }
+#
+# Example 8 — Bastion RBAC (bastion_hosts.<key>.role_assignments)
+# bastion_hosts = {
+#   weu = {
+#     ...
+#     role_assignments = {
+#       aksadmin_bastion_reader = {
+#         role_definition_id_or_name = "Reader"
+#         principal_id               = "00000000-0000-0000-0000-000000000000"
+#         principal_type             = "Group"
+#       }
+#     }
+#   }
+# }
+#
+# Example 9 — Standalone RBAC at arbitrary scope (top-level role_assignments)
+# role_assignments = {
+#   subscription_reader = {
+#     role_definition_id_or_name = "Reader"
+#     scope                      = "/subscriptions/<subId>"
+#     principal_id               = "00000000-0000-0000-0000-000000000000"
+#     principal_type             = "Group"
+#   }
+# }
+
+# -------------------------------------------------------------------------------------
 # Private DNS Zones (Private Endpoint name resolution)
 # -------------------------------------------------------------------------------------
 # Purpose: When a Private Endpoint is created, DNS records must resolve service FQDNs
@@ -51,7 +214,7 @@ private_dns_zones = {
 
     virtual_network_links = {
       weu_spoke = {
-        name                 = "link-demo-applz-aks-prod-weu-vnet"
+        name                 = "link-msft-applz-aks-prod-weu-vnet"
         virtual_network_key  = "weu_spoke"
         registration_enabled = false
         resolution_policy    = "Default"
@@ -73,7 +236,7 @@ private_dns_zones = {
 
     virtual_network_links = {
       weu_spoke = {
-        name                 = "link-demo-applz-aks-prod-weu-vnet"
+        name                 = "link-msft-applz-aks-prod-weu-vnet"
         virtual_network_key  = "weu_spoke"
         registration_enabled = false
         resolution_policy    = "Default"
@@ -95,7 +258,7 @@ private_dns_zones = {
 
     virtual_network_links = {
       weu_spoke = {
-        name                 = "link-demo-applz-aks-prod-weu-vnet"
+        name                 = "link-msft-applz-aks-prod-weu-vnet"
         virtual_network_key  = "weu_spoke"
         registration_enabled = false
         resolution_policy    = "Default"
@@ -117,7 +280,7 @@ private_dns_zones = {
 
     virtual_network_links = {
       weu_spoke = {
-        name                 = "link-demo-applz-aks-prod-weu-vnet"
+        name                 = "link-msft-applz-aks-prod-weu-vnet"
         virtual_network_key  = "weu_spoke"
         registration_enabled = false
         resolution_policy    = "Default"
@@ -140,7 +303,7 @@ private_dns_zones = {
 
     virtual_network_links = {
       weu_spoke = {
-        name                 = "link-demo-applz-aks-prod-weu-vnet"
+        name                 = "link-msft-applz-aks-prod-weu-vnet"
         virtual_network_key  = "weu_spoke"
         registration_enabled = false
         resolution_policy    = "Default"
@@ -162,7 +325,7 @@ private_dns_zones = {
 # -------------------------------------------------------------------------------------
 # Purpose: destination for diagnostics and (optionally) AKS OMS agent logs.
 log_analytics_workspace_configuration = {
-  name               = "demo-applz-aks-prod-weu-network-law"
+  name               = "msft-applz-aks-prod-weu-network-law"
   resource_group_key = "weu"
   location           = "westeurope"
 }
@@ -174,10 +337,25 @@ log_analytics_workspace_configuration = {
 # Referenced by other blocks using `resource_group_key`.
 resource_groups = {
   weu = {
-    name     = "demo-applz-aks-prod-weu-rg"
+    name     = "msft-applz-aks-prod-weu-rg"
     location = "westeurope"
     tags = {
       environment = "prod"
+    }
+
+    role_assignments = {
+      pdevadiga_contributor = {
+        role_definition_id_or_name = "Contributor"
+        principal_id               = "00000000-0000-0000-0000-000000000000"
+        principal_type             = "User"
+        description                = "Contributor access for pdevadiga"
+      }
+      aksadmin_contributor = {
+        role_definition_id_or_name = "Contributor"
+        principal_id               = "00000000-0000-0000-0000-000000000000"
+        principal_type             = "Group"
+        description                = "Contributor access for aksadmin group"
+      }
     }
   }
 }
@@ -195,9 +373,24 @@ key_vaults = {
 
     public_network_access_enabled = false
 
+    role_assignments = {
+      pdevadiga_secrets_user = {
+        role_definition_id_or_name = "Key Vault Secrets User"
+        principal_id               = "00000000-0000-0000-0000-000000000000"
+        principal_type             = "User"
+        description                = "Read secrets for pdevadiga"
+      }
+      aksadmin_secrets_user = {
+        role_definition_id_or_name = "Key Vault Secrets User"
+        principal_id               = "00000000-0000-0000-0000-000000000000"
+        principal_type             = "Group"
+        description                = "Read secrets for aksadmin group"
+      }
+    }
+
     private_endpoints = {
       vault = {
-        name = "demo-applz-aks-prod-weu-kv-pe"
+        name = "msft-applz-aks-prod-weu-kv-pe"
         network_configuration = {
           vnet_key   = "weu_spoke"
           subnet_key = "private_endpoints"
@@ -226,7 +419,7 @@ key_vaults = {
 # Security posture here is private-by-default (public access disabled + private endpoint).
 storage_accounts = {
   weu_shared = {
-    name               = "demoapplzaksweudc3c76"
+    name               = "msftapplzaksweudc3c76"
     resource_group_key = "weu"
     location           = "westeurope"
 
@@ -234,7 +427,7 @@ storage_accounts = {
 
     private_endpoints = {
       blob = {
-        name = "demo-applz-aks-prod-weu-st-pe-blob"
+        name = "msft-applz-aks-prod-weu-st-pe-blob"
         network_configuration = {
           vnet_key   = "weu_spoke"
           subnet_key = "private_endpoints"
@@ -254,10 +447,10 @@ storage_accounts = {
     # Driven purely by TFVARS via the AVM storage account module.
     containers = {
       wfs = {
-        name = "demo-weu-wfs"
+        name = "msft-weu-wfs"
       }
       datapond_dev = {
-        name = "demo-weu-datapond-dev"
+        name = "msft-weu-datapond-dev"
       }
     }
 
@@ -275,7 +468,7 @@ storage_accounts = {
 # The AKS subnet(s) must be associated with the route table(s) *before* AKS create/update.
 route_tables = {
   weu_spoke_udr = {
-    name               = "demo-applz-aks-prod-weu-vnet-udr"
+    name               = "msft-applz-aks-prod-weu-vnet-udr"
     resource_group_key = "weu"
     location           = "westeurope"
 
@@ -304,7 +497,7 @@ route_tables = {
 # Each subnet can reference an NSG using `network_security_group_key`.
 network_security_groups = {
   aks_nodes = {
-    name               = "demo-applz-aks-prod-weu-sub-aks-nsg"
+    name               = "msft-applz-aks-prod-weu-sub-aks-nsg"
     resource_group_key = "weu"
     location           = "westeurope"
     tags = {
@@ -314,7 +507,7 @@ network_security_groups = {
   }
 
   aks_apiserver = {
-    name               = "demo-applz-aks-prod-weu-sub-aksapi-nsg"
+    name               = "msft-applz-aks-prod-weu-sub-aksapi-nsg"
     resource_group_key = "weu"
     location           = "westeurope"
     tags = {
@@ -324,7 +517,7 @@ network_security_groups = {
   }
 
   private_endpoints = {
-    name               = "demo-applz-aks-prod-weu-sub-pe-nsg"
+    name               = "msft-applz-aks-prod-weu-sub-pe-nsg"
     resource_group_key = "weu"
     location           = "westeurope"
     tags = {
@@ -334,7 +527,7 @@ network_security_groups = {
   }
 
   app_gateway = {
-    name               = "demo-applz-aks-prod-weu-sub-appgw-nsg"
+    name               = "msft-applz-aks-prod-weu-sub-appgw-nsg"
     resource_group_key = "weu"
     location           = "westeurope"
     tags = {
@@ -344,7 +537,7 @@ network_security_groups = {
   }
 
   apim = {
-    name               = "demo-applz-aks-prod-weu-sub-apim-nsg"
+    name               = "msft-applz-aks-prod-weu-sub-apim-nsg"
     resource_group_key = "weu"
     location           = "westeurope"
     tags = {
@@ -354,12 +547,38 @@ network_security_groups = {
   }
 
   postgresql = {
-    name               = "demo-applz-aks-prod-weu-sub-pg-nsg"
+    name               = "msft-applz-aks-prod-weu-sub-pg-nsg"
     resource_group_key = "weu"
     location           = "westeurope"
     tags = {
       environment = "prod"
       workload    = "network"
+    }
+  }
+
+  vm = {
+    name               = "msft-applz-aks-prod-weu-sub-vm-nsg"
+    resource_group_key = "weu"
+    location           = "westeurope"
+
+    security_rules = {
+      allow_ssh_from_58_96_249_160 = {
+        name                       = "allow-ssh-from-58-96-249-160"
+        priority                   = 100
+        direction                  = "Inbound"
+        access                     = "Allow"
+        protocol                   = "Tcp"
+        source_port_range          = "*"
+        destination_port_range     = "22"
+        source_address_prefix      = "58.96.249.160/32"
+        destination_address_prefix = "*"
+        description                = "Allow SSH to VM subnet from 58.96.249.160/32"
+      }
+    }
+
+    tags = {
+      environment = "prod"
+      workload    = "gurobi"
     }
   }
 }
@@ -380,21 +599,21 @@ network_security_groups = {
 # - Private Endpoints subnet typically has `private_endpoint_network_policies = "Disabled"`.
 virtual_networks = {
   weu_spoke = {
-    name               = "demo-applz-aks-prod-weu-vnet"
+    name               = "msft-applz-aks-prod-weu-vnet"
     location           = "westeurope"
     resource_group_key = "weu"
     address_space      = ["10.30.0.0/16"]
 
     subnets = {
       aks_nodes = {
-        name                       = "demo-applz-aks-prod-weu-sub-aks"
+        name                       = "msft-applz-aks-prod-weu-sub-aks"
         address_prefixes           = ["10.30.0.0/22"]
         route_table_key            = "weu_spoke_udr"
         network_security_group_key = "aks_nodes"
       }
 
       aks_apiserver = {
-        name                       = "demo-applz-aks-prod-weu-sub-aksapi"
+        name                       = "msft-applz-aks-prod-weu-sub-aksapi"
         address_prefixes           = ["10.30.4.0/24"]
         route_table_key            = "weu_spoke_udr"
         network_security_group_key = "aks_apiserver"
@@ -412,14 +631,14 @@ virtual_networks = {
       }
 
       private_endpoints = {
-        name                              = "demo-applz-aks-prod-weu-sub-pe"
+        name                              = "msft-applz-aks-prod-weu-sub-pe"
         address_prefixes                  = ["10.30.5.0/24"]
         private_endpoint_network_policies = "Disabled"
         network_security_group_key        = "private_endpoints"
       }
 
       app_gateway = {
-        name                       = "demo-applz-aks-prod-weu-sub-appgw"
+        name                       = "msft-applz-aks-prod-weu-sub-appgw"
         address_prefixes           = ["10.30.6.0/24"]
         network_security_group_key = "app_gateway"
         delegations = [
@@ -433,13 +652,19 @@ virtual_networks = {
       }
 
       api_management = {
-        name                       = "demo-applz-aks-prod-weu-sub-apim"
+        name                       = "msft-applz-aks-prod-weu-sub-apim"
         address_prefixes           = ["10.30.9.0/24"]
         network_security_group_key = "apim"
       }
 
+      vm = {
+        name                       = "msft-applz-aks-prod-weu-sub-vm"
+        address_prefixes           = ["10.30.8.0/24"]
+        network_security_group_key = "vm"
+      }
+
       postgresql = {
-        name                       = "demo-applz-aks-prod-weu-sub-pg"
+        name                       = "msft-applz-aks-prod-weu-sub-pg"
         address_prefixes           = ["10.30.7.0/24"]
         network_security_group_key = "postgresql"
         service_endpoints_with_location = [
@@ -482,10 +707,10 @@ virtual_networks = {
 #   We set `avm.public_network_access = "Enabled"` while still enabling private cluster.
 aks_clusters = {
   weu = {
-    name                = "demo-applz-aks-prod-weu"
+    name                = "msft-applz-aks-prod-weu"
     location            = "westeurope"
     resource_group_key  = "weu"
-    node_resource_group = "demo-applz-aks-prod-weu-node-rg"
+    node_resource_group = "msft-applz-aks-prod-weu-node-rg"
 
     virtual_network_key  = "weu_spoke"
     subnet_nodes_key     = "aks_nodes"
@@ -547,7 +772,7 @@ aks_clusters = {
 # Purpose: L7 ingress/load-balancing. This configuration is private-only (no public IP).
 application_gateways = {
   weu = {
-    name               = "demo-applz-aks-prod-weu-appgw"
+    name               = "msft-applz-aks-prod-weu-appgw"
     location           = "westeurope"
     resource_group_key = "weu"
 
@@ -632,12 +857,12 @@ api_management_services = {}
 /*
 api_management_services = {
   weu = {
-    name               = "demo-applz-aks-prod-weu-apim"
+    name               = "msft-applz-aks-prod-weu-apim"
     location           = "westeurope"
     resource_group_key = "weu"
 
-    publisher_email = "apim-admin@contoso.com"
-    publisher_name  = "demo-applz"
+    publisher_email = "apim-admin@example.com"
+    publisher_name  = "msft-applz"
     sku_name        = "Premium_1"
 
     public_network_access_enabled = true
@@ -647,7 +872,7 @@ api_management_services = {
     private_endpoints_manage_dns_zone_group = true
     private_endpoints = {
       gateway = {
-        name = "demo-applz-aks-prod-weu-apim-pe"
+        name = "msft-applz-aks-prod-weu-apim-pe"
         network_configuration = {
           virtual_network_key = "weu_spoke"
           subnet_key          = "private_endpoints"
@@ -677,7 +902,7 @@ api_management_services = {
 # Security posture: public access disabled + Private Endpoint + `privatelink.azurecr.io` DNS.
 container_registries = {
   weu = {
-    name               = "demoapplzaksweudc3c76acr"
+    name               = "msftapplzaksweudc3c76acr"
     location           = "westeurope"
     resource_group_key = "weu"
 
@@ -689,7 +914,7 @@ container_registries = {
     private_endpoints_manage_dns_zone_group = true
     private_endpoints = {
       registry = {
-        name = "demo-applz-aks-prod-weu-acr-pe"
+        name = "msft-applz-aks-prod-weu-acr-pe"
         network_configuration = {
           virtual_network_key = "weu_spoke"
           subnet_key          = "private_endpoints"
@@ -724,7 +949,7 @@ container_registries = {
 mongo_clusters = {
   weu = {
     # Required
-    name                         = "demo-applz-aks-prod-weu-mongo"
+    name                         = "msft-applz-aks-prod-weu-mongo"
     location                     = "westeurope"
     resource_group_key           = "weu"
     administrator_login          = "mongoadmin"
@@ -741,7 +966,7 @@ mongo_clusters = {
     private_endpoints_manage_dns_zone_group = true
     private_endpoints = {
       pe = {
-        name = "demo-applz-aks-prod-weu-mongo-pe"
+        name = "msft-applz-aks-prod-weu-mongo-pe"
 
         network_configuration = {
           virtual_network_key = "weu_spoke"
@@ -785,7 +1010,7 @@ mongo_clusters = {
 # - Zone is pinned; changing it later generally fails unless doing an HA zone swap.
 postgres_servers = {
   weu = {
-    name               = "demo-applz-aks-prod-weu-pg"
+    name               = "msft-applz-aks-prod-weu-pg"
     location           = "westeurope"
     resource_group_key = "weu"
 
@@ -836,8 +1061,8 @@ postgres_servers = {
 # -------------------------------------------------------------------------------------
 # Purpose: connect this spoke VNet to the central Virtual WAN hub.
 vhub_connectivity_definitions = {
-  demo-applz-aks-prod-weu-vhub-conn = {
-    vhub_resource_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/demo-connectivity-prod-eu-rg/providers/Microsoft.Network/virtualHubs/demo-vhub-prod-eu"
+  msft-applz-aks-prod-weu-vhub-conn = {
+    vhub_resource_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/msft-connectivity-prod-eu-rg/providers/Microsoft.Network/virtualHubs/msft-vhub-prod-eu"
 
     virtual_network = {
       key = "weu_spoke"
@@ -846,12 +1071,66 @@ vhub_connectivity_definitions = {
     internet_security_enabled = false
 
     routing = {
-      associated_route_table_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/demo-connectivity-prod-eu-rg/providers/Microsoft.Network/virtualHubs/demo-vhub-prod-eu/hubRouteTables/defaultRouteTable"
+      associated_route_table_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/msft-connectivity-prod-eu-rg/providers/Microsoft.Network/virtualHubs/msft-vhub-prod-eu/hubRouteTables/defaultRouteTable"
       propagated_route_table = {
         route_table_ids = [
-          "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/demo-connectivity-prod-eu-rg/providers/Microsoft.Network/virtualHubs/demo-vhub-prod-eu/hubRouteTables/defaultRouteTable"
+          "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/msft-connectivity-prod-eu-rg/providers/Microsoft.Network/virtualHubs/msft-vhub-prod-eu/hubRouteTables/defaultRouteTable"
         ]
       }
+    }
+  }
+}
+
+# -------------------------------------------------------------------------------------
+# Virtual Machines
+# -------------------------------------------------------------------------------------
+# Purpose: optional IaaS VMs using Azure/avm-res-compute-virtualmachine/azurerm.
+virtual_machines = {
+  gurobi = {
+    # Requested VM name (Linux allows up to 64 chars).
+    name               = "msft-applz-aks-prod-gurobi-weu"
+    location           = "westeurope"
+    resource_group_key = "weu"
+
+    # Required by the upstream module; set to null if deploying to a region without zones.
+    zone = "1"
+
+    # Reference the subnet created in virtual_networks.weu_spoke.subnets.vm
+    # (Resolved to a real subnet resource ID inside the virtual_machines wrapper.)
+    virtual_network_key = "weu_spoke"
+    subnet_key          = "vm"
+
+    # Minimum NIC config: provide the target subnet resource ID.
+    # Replace the placeholder with the real subnet ID you want this VM in (e.g. the "aks_nodes" subnet, or a dedicated "vm" subnet).
+    network_interfaces = {
+      nic1 = {
+        name = "msft-applz-aks-prod-gurobi-weu-nic1"
+        ip_configurations = {
+          ipconfig1 = {
+            name                     = "ipconfig1"
+            create_public_ip_address = true
+            public_ip_address_name   = "msft-applz-aks-prod-gurobi-weu-pip"
+          }
+        }
+      }
+    }
+
+    os_type  = "Linux"
+    sku_size = "Standard_D2ds_v5"
+
+    # Requires subscription feature Microsoft.Compute/EncryptionAtHost; disable for this subscription.
+    encryption_at_host_enabled = false
+
+    source_image_reference = {
+      publisher = "Canonical"
+      offer     = "0001-com-ubuntu-server-jammy"
+      sku       = "22_04-lts-gen2"
+      version   = "latest"
+    }
+
+    tags = {
+      environment = "prod"
+      workload    = "gurobi"
     }
   }
 }
